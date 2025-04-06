@@ -1,0 +1,5 @@
+MSG_ID_EXISTS = "El ID ya existe"
+MSG_NOT_FOUND = "Mascota no encontrada"
+MSG_ADDED = "Mascota agregada exitosamente"
+MSG_UPDATED = "Mascota actualizada exitosamente"
+MSG_DELETED = "Mascota eliminada exitosamente"
