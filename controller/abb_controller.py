@@ -1,33 +1,71 @@
 from fastapi import APIRouter, HTTPException
-from service.abb_service import ABBService
+from typing import List
 from model.pet import Pet
+from service.abb_service import PetService
+from exception.abb_exceptions import DuplicateIdException, NotFoundException
 
-abb_service = ABBService()
-abb_route = APIRouter(prefix="/abb")
+router = APIRouter(prefix="/pets")
+service = PetService()
 
-@abb_route.get("/")
-async def get_pets():
-    return abb_service.list_pets()
+# 1. CREATE
+@router.post("/", response_model=dict)
+def create_pet(pet: Pet):
+    try:
+        service.create_pet(pet)
+        return {"message": "Pet added"}
+    except DuplicateIdException:
+        raise HTTPException(400, "ID already exists")
 
-@abb_route.post("/")
-async def create_pet(pet: Pet):
-    if abb_service.validate_id(pet.id):
-        raise HTTPException(status_code=400, detail="El ID ya existe")
-    abb_service.add_pet(pet)
-    return {"message": "Mascota agregada exitosamente"}
+# 2. LIST ALL
+@router.get("/", response_model=List[Pet])
+def list_pets():
+    return service.list_pets()
 
-@abb_route.delete("/{pet_id}")
-async def delete_pet(pet_id: int):
-    if not abb_service.delete_pet(pet_id):
-        raise HTTPException(status_code=404, detail="Mascota no encontrada")
-    return {"message": "Mascota eliminada exitosamente"}
+# 3. GET BY ID
+@router.get("/by-id/{pet_id}", response_model=Pet)
+def get_pet(pet_id: int):
+    try:
+        return service.get_by_id(pet_id)
+    except NotFoundException:
+        raise HTTPException(404, "Pet not found")
 
-@abb_route.put("/")
-async def update_pet(pet: Pet):
-    if not abb_service.update_pet(pet):
-        raise HTTPException(status_code=404, detail="Mascota no encontrada")
-    return {"message": "Mascota actualizada exitosamente"}
+# 4. UPDATE
+@router.put("/", response_model=dict)
+def update_pet(pet: Pet):
+    try:
+        service.update_pet(pet)
+        return {"message": "Pet updated"}
+    except NotFoundException:
+        raise HTTPException(404, "Pet not found")
 
-@abb_route.get("/by-name/{name}")
-async def get_pets_by_name(name: str):
-    return abb_service.get_pets_by_name(name)
+# 5. DELETE
+@router.delete("/{pet_id}", response_model=dict)
+def delete_pet(pet_id: int):
+    try:
+        service.delete_pet(pet_id)
+        return {"message": "Pet deleted"}
+    except NotFoundException:
+        raise HTTPException(404, "Pet not found")
+
+# 6. EXISTS
+@router.get("/exists/{pet_id}", response_model=dict)
+def exists_pet(pet_id: int):
+    return {"exists": service.exists(pet_id)}
+
+# 7. TRAVERSAL
+@router.get("/traversal/{order}", response_model=List[Pet])
+def traversal(order: str):
+    try:
+        return service.list_traversal(order)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+# 8. VACCINATED FILTER
+@router.get("/vaccinated/{status}", response_model=List[Pet])
+def vaccinated(status: bool):
+    return service.count_vaccinated(status)
+
+# 9. REPORT BY CITY & GENDER
+@router.get("/report", response_model=List[dict])
+def report():
+    return service.report_by_city_gender()

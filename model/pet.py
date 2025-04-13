@@ -1,6 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 class Pet(BaseModel):
-    id: int = Field(..., gt=0)
-    name: str = Field(..., min_length=1)
-    age: int = Field(..., ge=0)
+    id: int
+    name: str
+    age: int
+    vaccinated: bool
+    gender: str
+    city: str

@@ -1,5 +1,10 @@
-from fastapi import FastAPI              # ← Import necesario
-from controller.abb_controller import abb_route   # o router, según hayas elegido
+from fastapi import FastAPI
+from controller.abb_controller import router as pet_router
 
-app = FastAPI()                           # ← FastAPI ya está definido
-app.include_router(abb_route)
+app = FastAPI()
+app.include_router(pet_router)
+
+# Optional: run via `python main.py`
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

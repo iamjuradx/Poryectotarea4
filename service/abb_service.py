@@ -1,45 +1,67 @@
-from model.abb import ABB
 from model.pet import Pet
 from exception.abb_exceptions import DuplicateIdException, NotFoundException
 
-class ABBService:
+class PetService:
     def __init__(self):
-        self.abb = ABB()
-        self._initialize_data()
-
-    def _initialize_data(self):
-        ejemplos = [
-            Pet(id=4,  name="Quijada",     age=6),
-            Pet(id=5,  name="Castambo",    age=3),
-            Pet(id=11, name="Chandoberman",age=8),
-            Pet(id=7,  name="Careperro",   age=10),
-            Pet(id=2,  name="Carepedal",   age=4),
-            Pet(id=9,  name="Perro Viejo", age=12),
+        self.pets: list[Pet] = []
+        # Semilla de datos con 'age' incluido
+        example_pets = [
+            Pet(id=1, name="Careperro",    type="Dog",    gender="M", vaccinated=True,  city="Manizales", age=7),
+            Pet(id=2, name="Quijada",      type="Dog",    gender="F", vaccinated=False, city="Manizales", age=5),
+            Pet(id=3, name="Mateo",        type="Cat",    gender="M", vaccinated=True,  city="Manizales", age=3),
+            Pet(id=4, name="Perro Viejo",  type="Dog",    gender="M", vaccinated=False, city="Manizales", age=12),
+            Pet(id=5, name="Peluca Vieja", type="Cat",    gender="F", vaccinated=True,  city="Manizales", age=9),
+            Pet(id=6, name="Castambo",     type="Bird",   gender="M", vaccinated=False, city="Manizales", age=2),
         ]
-        for pet in ejemplos:
-            self.abb.add(pet)
+        for pet in example_pets:
+            self.pets.append(pet)
 
     def create_pet(self, pet: Pet):
-        if self.abb.exists(pet.id):
+        if any(p.id == pet.id for p in self.pets):
             raise DuplicateIdException()
-        self.abb.add(pet)
+        self.pets.append(pet)
+
+    def list_pets(self) -> list[Pet]:
+        return self.pets
+
+    def get_by_id(self, pet_id: int) -> Pet:
+        for p in self.pets:
+            if p.id == pet_id:
+                return p
+        raise NotFoundException()
 
     def update_pet(self, pet: Pet):
-        if not self.abb.update(pet):
-            raise NotFoundException()
+        for idx, p in enumerate(self.pets):
+            if p.id == pet.id:
+                self.pets[idx] = pet
+                return
+        raise NotFoundException()
 
     def delete_pet(self, pet_id: int):
-        if not self.abb.delete(pet_id):
-            raise NotFoundException()
-
-    def list_pets(self):
-        return self.abb.list_all()
-
-    def get_by_name(self, name: str):
-        return self.abb.find_by_name(name)
-
-    def count_by_name(self, name: str) -> int:
-        return self.abb.count_by_name(name)
+        for p in self.pets:
+            if p.id == pet_id:
+                self.pets.remove(p)
+                return
+        raise NotFoundException()
 
     def exists(self, pet_id: int) -> bool:
-        return self.abb.exists(pet_id)
+        return any(p.id == pet_id for p in self.pets)
+
+    def list_traversal(self, order: str) -> list[Pet]:
+        if order == "inorder":
+            return sorted(self.pets, key=lambda p: p.id)
+        if order == "preorder":
+            return sorted(self.pets, key=lambda p: p.name)
+        if order == "postorder":
+            return sorted(self.pets, key=lambda p: p.age)
+        raise ValueError("Invalid order")
+
+    def count_vaccinated(self, status: bool) -> list[Pet]:
+        return [p for p in self.pets if p.vaccinated == status]
+
+    def report_by_city_gender(self) -> list[dict]:
+        report = {}
+        for p in self.pets:
+            key = (p.city, p.gender)
+            report[key] = report.get(key, 0) + 1
+        return [{"city": c, "gender": g, "count": cnt} for (c, g), cnt in report.items()]
